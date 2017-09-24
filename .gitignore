@@ -1,0 +1,6 @@
+__pycache__
+.idea
+venv
+deployed.json
+.chalice/deployments
+tmp
