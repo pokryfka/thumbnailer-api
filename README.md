@@ -27,6 +27,15 @@ http -v -d ${BASE_URL}/thumbnail/s3%3A%2F%2Fpokryfka-test%2Fphotoinfo%2Ftest1.jp
     X-API-Key:xxx
 ```
 
+URI prefix can be optionally send as HTTP header:
+
+```bash
+http -v -d ${BASE_URL}/thumbnail/photoinfo%2Ftest1.jpg/long-edge/200 \
+    Accept:image/jpg \
+    URI-Prefix:s3://pokryfka-test/ \
+    X-API-Key:xxx
+```
+
 ## Caching
 
 Set THUMBNAILS_BUCKET in ``.chalice/config.json`` to cache thumbnails on [AWS S3](https://aws.amazon.com/s3/).
@@ -47,7 +56,6 @@ an origin of a [AWS CloudFront](https://aws.amazon.com/cloudfront/) distribution
 ## TODO
 
 - set minimum and maxium thumbnail size
-- DEFAULT_URI_PREFIX
 - Accept 'application/json' returns uri
 - error description?
 - extend API with width and height paths?

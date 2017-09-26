@@ -40,6 +40,10 @@ def thumbnail_data(uri, long_edge_pixels):
         uri = urllib.parse.unquote_plus(uri)
         long_edge_pixels = int(long_edge_pixels)
         app.log.info("Requested: %s @ %d" % (uri, long_edge_pixels))
+        uri_prefix = request.headers.get('URI-Prefix')
+        if uri_prefix is not None:
+            app.log.info("URI-Prefix: {0}".format(uri_prefix))
+            uri = uri_prefix + uri
         # check cache first
         cached = list_cached_uris(uri, long_edge_pixels)
         if len(cached) > 0:
