@@ -46,14 +46,12 @@ an origin of a [AWS CloudFront](https://aws.amazon.com/cloudfront/) distribution
 
 ## TODO
 
-- dont resize if the original image is smaller?
-- set minimum size
-- dont thumbnail
+- set minimum and maxium thumbnail size
 - DEFAULT_URI_PREFIX
 - Accept 'application/json' returns uri
-- extend API with width and height paths
+- error description?
+- extend API with width and height paths?
 - add scheduled functions checking and cleaning up the cache
-- error description
 - support for HTTP uri?
 - POST image data? see https://aws.amazon.com/blogs/developer/chalice-version-0-9-0-is-now-available/
 - tests
