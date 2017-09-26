@@ -1,3 +1,6 @@
 #!/usr/bin/env bash
 
-chalice deploy --no-autogen-policy
+SCRIPT_DIR=`dirname $0`
+cd ${SCRIPT_DIR}/..
+
+chalice deploy

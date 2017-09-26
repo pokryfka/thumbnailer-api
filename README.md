@@ -2,7 +2,7 @@
 
 REST interface to create thumbnails of images stored on AWS S3.
 
-Thumbnails are optionally cached on specified S3 bucket.
+Thumbnails are optionally cached on (another) S3 bucket.
 
 Used by [https://photos.pokryfka.net](https://photos.pokryfka.net)
 
@@ -10,7 +10,7 @@ Used by [https://photos.pokryfka.net](https://photos.pokryfka.net)
 
 GET /thumbnail/{uri}/long-edge/{long_edge_pixels}
 
-where
+where:
 
 - *{uri}* - URL encoded URI of the original image
 - *{long_edge_pixels}* - size in pixels of the long edge
@@ -22,32 +22,22 @@ Supported URIs:
 Example (using [HTTPie](https://httpie.org) HTTP client), note the *Accept* header:
 
 ```bash
-http -v -d 'localhost:8000/thumbnail/s3%3A%2F%2Fpokryfka-test%2Fphotoinfo%2Ftest1.jpg/long-edge/200' \
+http -v -d ${BASE_URL}/thumbnail/s3%3A%2F%2Fpokryfka-test%2Fphotoinfo%2Ftest1.jpg/long-edge/200 \
     Accept:image/jpg \
-    X-API-Key:rpWPrqDne2aqBjB401lzOaLBNzMSVeYl91jHN457
+    X-API-Key:xxx
 ```
 
 ## Caching
 
-Set THUMBNAILS_BUCKET to cache thumbnails on [AWS S3](https://aws.amazon.com/s3/).
-Update the bucket name ``.chalice/policy-dev.json``.
-
-Example:
-
-```bash
-export THUMBNAILS_BUCKET=pokryfka-photos-thumbnails
-```
-
-It is recommended to add objects lifecycle rule to delete old images.
+Set THUMBNAILS_BUCKET in ``.chalice/config.json`` to cache thumbnails on [AWS S3](https://aws.amazon.com/s3/).
+Note that the policy in ``.chalice/policy-dev.json`` assumes that the thumbnails bucket name ends with *thumbnails*.
 
 ## Deploying
 
-```bash
-./scripts/deploy.sh
-```
+See bash ``./scripts/deploy.sh``` as well as [Chalice](https://github.com/aws/chalice/) for more information.
 
-See [Chalice](https://github.com/aws/chalice/) for more information.
-
+It is a good idea to make the [AWS API Gateway](https://aws.amazon.com/api-gateway/)
+an origin of a [AWS CloudFront](https://aws.amazon.com/cloudfront/) distribution (or another CDN).
 
 ## Related Projects
 
@@ -56,7 +46,14 @@ See [Chalice](https://github.com/aws/chalice/) for more information.
 
 ## TODO
 
-- implemend http source in vfile?
 - dont resize if the original image is smaller?
-- tests
+- set minimum size
+- dont thumbnail
+- DEFAULT_URI_PREFIX
+- Accept 'application/json' returns uri
+- extend API with width and height paths
+- add scheduled functions checking and cleaning up the cache
+- error description
+- support for HTTP uri?
 - POST image data? see https://aws.amazon.com/blogs/developer/chalice-version-0-9-0-is-now-available/
+- tests

@@ -1,10 +1,20 @@
 {
   "version": "2.0",
   "app_name": "thumbnailer-api",
+  "manage_iam_role": true,
+  "autogen_policy": false,
+  "environment_variables": {
+    "THUMBNAILS_BUCKET": ""
+  },
   "lambda_memory_size": 128,
+  "lambda_timeout": 30,
+  "tags": {
+    "project": "photos"
+  },
   "stages": {
     "dev": {
-      "api_gateway_stage": "dev"
+      "api_gateway_stage": "dev",
+      "iam_policy_file": "policy-dev.json"
     }
   }
 }
