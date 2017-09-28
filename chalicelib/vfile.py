@@ -7,26 +7,52 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+# TODO: make common base excetion class with message property?
+
+class InvalidURIException(ValueError):
+    def __init__(self, uri, example=None):
+        self._uri = uri
+        self._example = example
+        message = "Invalid path or URI: {0}".format(uri)
+        if example is not None:
+            message = message + ", example: " + example
+        self._message = message
+        super(InvalidURIException, self).__init__(message)
+    @property
+    def uri(self):
+        return self._uri
+    @property
+    def message(self):
+        return self._message
+
+
 # TODO: implement for LocalFile and HttpFile, currently used only in S3
 class NotFoundException(Exception):
     def __init__(self, uri):
         self._uri = uri
-        message = "%s does not exist"
+        message = "{0} does not exist".format(uri)
+        self._message = message
         super(NotFoundException, self).__init__(message)
     @property
     def uri(self):
         return self._uri
+    @property
+    def message(self):
+        return self._message
 
 
 class ForbiddenException(Exception):
-    def __init__(self, uri):
+    def __init__(self, uri, action):
         self._uri = uri
-        # TODO: specify read/list or write access
-        message = "Access denied to %s" % uri
+        message = "Forbidden to {action} to {uri}".format(action=action, uri=uri)
+        self._message = message
         super(ForbiddenException, self).__init__(message)
     @property
     def uri(self):
         return self._uri
+    @property
+    def message(self):
+        return self._message
 
 
 # factory method
@@ -36,12 +62,12 @@ def vfile(path_or_uri):
     elif LocalFile.isFileURI(path_or_uri):
         return LocalFile(path_or_uri)
     else:
-        # TODO: create Exception type?
-        raise ValueError("Invalid path or URI" % path_or_uri)
+        raise InvalidURIException(path_or_uri)
 
 
 # abstract class
 class VFile:
+
     def __init__(self, uri):
         self._uri = uri
 
@@ -76,9 +102,10 @@ class VFile:
 
 
 class LocalFile(VFile):
+
     def __init__(self, uri):
         if not LocalFile.isFileURI(uri):
-            raise ValueError("Invalid File URI: %s, use file://path or just path" % uri)
+            raise InvalidURIException(uri, 'file://path or just path')
 
         if not uri.startswith('file://'):
             uri = "file://%s" % uri
@@ -143,44 +170,52 @@ class LocalFile(VFile):
 #s3_client = boto3.client('s3', **AWS_CONFIG)
 #s3_client = boto3.client('s3')
 
+# TODO: bucket was renamed to bucket_name - change in photoinfo
 
 class S3File(VFile):
+
     # TODO: this is supposed to be a singleton, is there a better way to do it in Python?
     _s3_client = None
     @staticmethod
     def isS3URI(uri):
         return uri.startswith('s3://') and uri.count('/') > 2
+
     @property
-    def bucket(self):
-        return self._bucket
-    @bucket.setter
-    def bucket(self, value):
+    def bucket_name(self):
+        return self._bucket_name
+
+    @bucket_name.setter
+    def bucket_name(self, value):
         # TODO: test value?
-        self._bucket = value
+        self._bucket_name = value
+
     @property
     def key(self):
         return self._key
+
     def __init__(self, uri):
         if not S3File.isS3URI(uri):
-            raise ValueError("Invalid S3URI: %s, use s3://bucket/key" % uri)
+            raise InvalidURIException(uri, 's3://bucket/key')
         if not S3File._s3_client:
             import boto3
             S3File._s3_client = boto3.client('s3')
         VFile.__init__(self, uri)
         path = uri[len('s3://'):]
         i = path.index('/')
-        self._bucket = path[:i]
+        self._bucket_name = path[:i]
         self._key = path[i + 1:]
+
     def exists(self):
         # TODO: raise ForbiddenException
         try:
-            _ = S3File._s3_client.get_object(Bucket=self.bucket, Key=self.key)
+            _ = S3File._s3_client.get_object(Bucket=self.bucket_name, Key=self.key)
             return True
         except S3File._s3_client.exceptions.NoSuchKey:
             return False
+
     def read(self,size=-1):
         try:
-            obj = S3File._s3_client.get_object(Bucket=self.bucket, Key=self.key)
+            obj = S3File._s3_client.get_object(Bucket=self.bucket_name, Key=self.key)
             fh = obj['Body']
             if size > 0:
                 data = fh.read(size)
@@ -191,12 +226,12 @@ class S3File(VFile):
             logger.error("Failed to read %s: %s" % (self.uri, e))
             raise NotFoundException(self.uri)
         except S3File._s3_client.exceptions.ClientError as e:
-            # TODO: check type of ClientError
             logger.error("Not allowed to read %s: %s" % (self.uri, e))
-            raise ForbiddenException(self.uri)
+            raise ForbiddenException(self.uri, 'read')
+
     def write(self,data):
         try:
-            response = S3File._s3_client.put_object(Body=data, Bucket=self.bucket, Key=self.key)
+            response = S3File._s3_client.put_object(Body=data, Bucket=self.bucket_name, Key=self.key)
             # TODO: throw if failed to write, make another exception type
             if response['ResponseMetadata']['HTTPStatusCode'] == 200:
                 return True
@@ -206,9 +241,10 @@ class S3File(VFile):
         except S3File._s3_client.exceptions.ClientError as e:
             # TODO: check type of ClientError
             logger.error("Not allowed to write %s: %s" % (self.uri, e))
-            raise ForbiddenException(self.uri)
+            raise ForbiddenException(self.uri, 'write')
+
     def remove(self):
-        response = S3File._s3_client.delete_object(Bucket=self.bucket, Key=self.key)
+        response = S3File._s3_client.delete_object(Bucket=self.bucket_name, Key=self.key)
         if response['ResponseMetadata']['HTTPStatusCode'] == 204:
             return True
         else:

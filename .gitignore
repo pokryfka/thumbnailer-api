@@ -1,6 +1,6 @@
 __pycache__
+.cache
 .idea
-venv
-deployed.json
+.chalice/deployed.json
 .chalice/deployments
 tmp

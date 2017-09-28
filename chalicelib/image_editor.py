@@ -6,17 +6,31 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+MIN_LONG_EDGE = 200
+MAX_LONG_EDGE = 2000
+
 # see https://pillow.readthedocs.io/en/latest/handbook/concepts.html#filters-comparison-table
-_RESAMPLE_FILTER=Image.LANCZOS
+RESAMPLE_FILTER=Image.LANCZOS
 # see http://pillow.readthedocs.io/en/3.0.x/handbook/image-file-formats.html#jpeg
-_JPEG_OPTS = dict(quality=75, optimize=True)
+JPEG_OPTS = dict(quality=75, optimize=True)
 
 
 def resize_image_data(data, long_edge_pixels, dont_enlarge=True):
     """Resizes image data.
 
-    Returns data with resized JPEG image.
+    Raises TypeError if data is not bytes.
+    Raises TypeError if long_edge_pixels is not int.
+    Raises ValueError if long_edge_pixels is < MIN_LONG_EDGE or > MAX_LONG_EDGE.
+    Raises IOError if the data is not a valid JPEG image.
+
+    Returns data (bytes) with resized JPEG image.
     """
+
+    if not isinstance(long_edge_pixels, int):
+        raise TypeError('long_edge_pixels is not int')
+    if long_edge_pixels < MIN_LONG_EDGE or long_edge_pixels > MAX_LONG_EDGE:
+        raise ValueError("MIN_LONG_EDGE = {0}, MAX_LONG_EDGE = {1}".format(MIN_LONG_EDGE, MAX_LONG_EDGE))
+
     b = BytesIO(data)
     im = Image.open(b)
     im_res = im.size
@@ -25,10 +39,10 @@ def resize_image_data(data, long_edge_pixels, dont_enlarge=True):
                     .format(long_edge_pixels, im_res=im_res))
         return data
     th_res = (long_edge_pixels, long_edge_pixels)
-    im.thumbnail(th_res, resample=_RESAMPLE_FILTER)
+    im.thumbnail(th_res, resample=RESAMPLE_FILTER)
     th_res = im.size
     output = BytesIO()
-    im.save(output, 'JPEG', **_JPEG_OPTS)
+    im.save(output, 'JPEG', **JPEG_OPTS)
     im.close()
     outdata = output.getvalue()
     logger.info("Resized {im_res[0]}x{im_res[1]} {im_size} bytes to {th_res[0]}x{th_res[1]} {th_size} bytes"

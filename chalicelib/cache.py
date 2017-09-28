@@ -2,66 +2,98 @@ import boto3
 import os
 from uuid import uuid4
 import logging
-from .vfile import vfile
-
-
-THUMBNAILS_BUCKET = GOOGLE_MAPS_API_KEY = os.environ.get('THUMBNAILS_BUCKET') or None
+from .vfile import S3File
 
 
 logger = logging.getLogger(__name__)
 
 
-def _s3_bucket_key(uri):
-    if not (uri.startswith('s3://') and uri.count('/') > 2):
-        raise BaseException("Invalid URI format: %s, use s3://bucket_name/key" % uri)
-    else:
-        path = uri[len('s3://'):]
-        i = path.index('/')
-        bucket_name = path[:i]
-        key = path[i + 1:]
-        return bucket_name, key
+class S3Cache:
+
+    def __init__(self, bucket_name):
+        """
+
+        :param bucket_name:
+        """
+
+        if not isinstance(bucket_name, str):
+            raise TypeError('bucket_name has to be str')
+        if len(bucket_name) == 0:
+            raise ValueError('bucket_name not set')
+        self._bucket_name = bucket_name
+
+    @property
+    def bucket_name(self):
+        return self._bucket_name
 
 
-def _cache_prefix(uri, long_edge_pixels):
-    # does not contain the unique id and file extension
-    bucket_name, key = _s3_bucket_key(uri)
-    type = 's3' # later add support for different types
-    path, filename_ext = os.path.split(key)
-    filename, ext =  os.path.splitext(filename_ext)
-    new_key = "%s_%s/long%spx/%s/%s" % (type, bucket_name, long_edge_pixels, path, filename)
-    return "s3://%s/%s" % (THUMBNAILS_BUCKET, new_key)
+    def _check_src_uri(self, uri):
+        s3uri = S3File(uri)
 
+        if s3uri.bucket_name == self.bucket_name:
+            raise ValueError("{uri} on CACHE_BUCKET".format(uri=uri))
 
-def _create_cache_uri(uri, long_edge_pixels):
-    """Returns *unique* URI to store cached file."""
-    bucket_name, key = _s3_bucket_key(uri)
-    type = 's3' # later add support for different types
-    path, filename_ext = os.path.split(key)
-    filename, ext =  os.path.splitext(filename_ext)
-    unique = uuid4()
-    new_key = "%s_%s/long%spx/%s/%s/%s%s" % (type, bucket_name, long_edge_pixels, path, filename, unique, ext)
-    return "s3://%s/%s" % (THUMBNAILS_BUCKET, new_key)
+    def _cache_prefix(self, uri, long_edge_pixels):
+        # does not contain the unique id and file extension
+        s3uri = S3File(uri)
+        type = 's3'  # later add support for different types
+        path, filename_ext = os.path.split(s3uri.key)
+        filename, ext = os.path.splitext(filename_ext)
+        new_key = "%s_%s/long%spx/%s/%s" % (type, s3uri.bucket_name, long_edge_pixels, path, filename)
+        return "s3://%s/%s" % (self.bucket_name, new_key)
 
+    def _create_cache_uri(self, uri, long_edge_pixels):
+        """Returns *unique* URI to store cached file."""
+        s3uri = S3File(uri)
+        type = 's3'  # later add support for different types
+        path, filename_ext = os.path.split(s3uri.key)
+        filename, ext = os.path.splitext(filename_ext)
+        unique = uuid4()
+        new_key = "%s_%s/long%spx/%s/%s/%s%s" % (type, s3uri.bucket_name, long_edge_pixels, path, filename, unique, ext)
+        return "s3://%s/%s" % (self.bucket_name, new_key)
 
-def cache_data(data, uri, long_edge_pixels):
-    """Stores data. Returns URI or None."""
-    if THUMBNAILS_BUCKET is None:
-        logger.error("THUMBNAILS_BUCKET is not defined")
-        return None
-    resized_uri = _create_cache_uri(uri, long_edge_pixels)
-    f = vfile(resized_uri)
-    f.write(data)
-    return resized_uri
+    def write_data(self, data, src_uri, long_edge_pixels):
+        """Stores data.
 
+        Raises TypeError if data is not bytes.
+        Raises ValueError if uri is not valid.
+        Raises ValueError if uri is on the cache bucket.
+        Raises TypeError if long_edge_pixels is not int.
 
-def list_cached_uris(uri, long_edge_pixels):
-    """Returns array with URIs of cached objects. """
-    if THUMBNAILS_BUCKET is None:
-        logger.error("THUMBNAILS_BUCKET is not defined")
-        return []
-    # TODO: make the bucket singleton?
-    s3 = boto3.resource('s3')
-    bucket = s3.Bucket(THUMBNAILS_BUCKET)
-    prefix = _cache_prefix(uri, long_edge_pixels)[len("s3://%s" % THUMBNAILS_BUCKET)+1:]
-    result = bucket.objects.filter(Prefix=prefix)
-    return ["s3://%s/%s" % (o.bucket_name, o.key) for o in result]
+        Returns URI of stored object or None."""
+
+        if not isinstance(data, bytes):
+            raise TypeError('data not bytes')
+        self._check_src_uri(src_uri)
+
+        resized_uri = self._create_cache_uri(src_uri, long_edge_pixels)
+        f = S3File(resized_uri)
+        f.write(data)
+        return resized_uri
+
+    def list_cached_uris(self, uri, long_edge_pixels):
+        """Lists cached objects.
+
+        Raises ValueError if uri is not valid.
+        Raises ValueError if uri is on the cache bucket.
+        Raises TypeError if long_edge_pixels is not int.
+
+        Returns array with URIs of cached objects."""
+
+        self._check_src_uri(uri)
+        if not isinstance(long_edge_pixels, int):
+            raise TypeError('long_edge_pixels is not int')
+
+        # allow the cache directory to be a subdir
+        i = self.bucket_name.find('/')
+        if i > 0:
+            bucket_name = self.bucket_name[:i]
+        else:
+            bucket_name = self.bucket_name
+
+        # TODO: make the bucket singleton?
+        s3 = boto3.resource('s3')
+        bucket = s3.Bucket(bucket_name)
+        prefix = self._cache_prefix(uri, long_edge_pixels)[len("s3://%s" % bucket_name)+1:]
+        result = bucket.objects.filter(Prefix=prefix)
+        return ["s3://%s/%s" % (o.bucket_name, o.key) for o in result]

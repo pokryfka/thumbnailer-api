@@ -36,11 +36,13 @@ http -v -d ${BASE_URL}/thumbnail/photoinfo%2Ftest1.jpg/long-edge/200 \
     X-API-Key:xxx
 ```
 
-## Caching
+## Configuration
 
-Set THUMBNAILS_BUCKET in ``.chalice/config.json`` to cache thumbnails on [AWS S3](https://aws.amazon.com/s3/).
+### Caching
+
+Set *CACHE_BUCKET* in ``.chalice/config.json`` to cache thumbnails on [AWS S3](https://aws.amazon.com/s3/).
 Note that the policy in ``.chalice/policy-dev.json`` assumes that the thumbnails bucket name ends with *thumbnails*.
-
+ 
 ## Deploying
 
 See bash ``./scripts/deploy.sh``` as well as [Chalice](https://github.com/aws/chalice/) for more information.
@@ -55,11 +57,7 @@ an origin of a [AWS CloudFront](https://aws.amazon.com/cloudfront/) distribution
 
 ## TODO
 
-- set minimum and maxium thumbnail size
-- Accept 'application/json' returns uri
-- error description?
-- extend API with width and height paths?
 - add scheduled functions checking and cleaning up the cache
+- vfile tests
 - support for HTTP uri?
-- POST image data? see https://aws.amazon.com/blogs/developer/chalice-version-0-9-0-is-now-available/
-- tests
+- support for POSTing image data? see https://aws.amazon.com/blogs/developer/chalice-version-0-9-0-is-now-available/
