@@ -4,7 +4,7 @@
   "manage_iam_role": true,
   "autogen_policy": false,
   "environment_variables": {
-    "THUMBNAILS_BUCKET": ""
+    "CACHE_BUCKET": ""
   },
   "lambda_memory_size": 128,
   "lambda_timeout": 30,

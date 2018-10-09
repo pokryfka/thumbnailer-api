@@ -44,7 +44,7 @@ class NotFoundException(Exception):
 class ForbiddenException(Exception):
     def __init__(self, uri, action):
         self._uri = uri
-        message = "Forbidden to {action} to {uri}".format(action=action, uri=uri)
+        message = "Forbidden to {action} {uri}".format(action=action, uri=uri)
         self._message = message
         super(ForbiddenException, self).__init__(message)
     @property

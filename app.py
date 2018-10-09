@@ -11,10 +11,6 @@ from chalicelib.vfile import S3File, InvalidURIException, NotFoundException, For
 
 DEBUG = env.get('DEBUG') == '1'
 
-# see http://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/Expiration.html#expiration-individual-objects
-CONTENT_AGE_IN_SECONDS = 60*60
-
-
 if DEBUG:
     logging.basicConfig(level=logging.INFO)
 else:
@@ -23,6 +19,15 @@ else:
 app = Chalice(app_name='thumbnailer-api')
 
 app.log.setLevel(logging.INFO)
+
+
+# see http://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/Expiration.html#expiration-individual-objects 
+try:
+    CONTENT_AGE_IN_SECONDS = int(env.get('CONTENT_AGE_IN_SECONDS'))
+except:
+    CONTENT_AGE_IN_SECONDS = 10*60
+app.log.info("CONTENT_AGE_IN_SECONDS = {0}".format(CONTENT_AGE_IN_SECONDS))
+
 
 cache_bucket = env.get('CACHE_BUCKET') 
 if cache_bucket is not None and len(cache_bucket) > 4:
@@ -56,13 +61,19 @@ def _create_thumbnail_data(uri, long_edge_pixels):
     return thumb_data
 
 
-def _image_data_response(data):
+def _image_data_response(data, cached=False):
     checksum = md5()
     checksum.update(data)
-    headers = { #'Content-Length': str(len(data)), # seems Chalice adds it anyway
-                'Content-Type': 'image/jpg',
-                'ETag': checksum.hexdigest(),
-                'Cache-Control': "max-age=%d" % CONTENT_AGE_IN_SECONDS }
+    headers = {
+        #'Content-Length': str(len(data)), # seems Chalice adds it anyway
+        'Content-Type': 'image/jpg',
+        'ETag': checksum.hexdigest(),
+        'Cache-Control': "max-age={0}".format(CONTENT_AGE_IN_SECONDS)
+    }
+    if cached:
+        headers['X-Thumbnailer-API-Cache'] = 'Hit'
+    else:
+        headers['X-Thumbnailer-API-Cache'] = 'Missed'
     app.log.debug("Headers: %s" % headers)
     return Response(data,
                     status_code=200,
@@ -92,13 +103,17 @@ def thumbnail(uri, long_edge_pixels):
         app.log.info("CACHE_BUCKET = {0}".format(cache.bucket_name))
     try:
         image_data = None
+        cached = False
         if cache is not None:
             image_data = _find_thumbnail_data(uri, long_edge_pixels)
+            cached = image_data is not None
         if image_data is None:
             image_data = _create_thumbnail_data(uri, long_edge_pixels)
             if cache is not None:
                 _cache_thumbnail_data(image_data, uri, long_edge_pixels)
-        return _image_data_response(image_data)
+        if image_data is None: # should not happen
+            raise NotFoundError
+        return _image_data_response(image_data, cached)
     except InvalidURIException as e:
         raise BadRequestError(e.message)
     except NotFoundException as e:
@@ -112,9 +127,3 @@ def thumbnail(uri, long_edge_pixels):
             raise BadRequestError(error)
         else:
             raise ChaliceViewError
-
-
-# TODO: test, run daily and check the cache?
-#@app.schedule('rate(1 hour)')
-#def every_hour(event):
-#    print(event.to_dict())
