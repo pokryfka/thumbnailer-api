@@ -9,12 +9,30 @@
   "lambda_memory_size": 128,
   "lambda_timeout": 30,
   "tags": {
-    "project": "photos"
+    "Project": "photos"
   },
   "stages": {
     "dev": {
       "api_gateway_stage": "dev",
-      "iam_policy_file": "policy-dev.json"
+      "iam_policy_file": "policy-dev.json",
+      "environment_variables": {
+        "DEBUG": "1",
+        "CONTENT_AGE_IN_SECONDS": "60"
+      },
+      "tags": {
+        "Stage": "dev"
+      }
+    },
+    "prod": {
+      "api_gateway_stage": "prod",
+      "iam_policy_file": "policy-dev.json",
+      "lambda_memory_size": 256,
+      "environment_variables": {
+        "CONTENT_AGE_IN_SECONDS": "3600"
+      },
+      "tags": {
+        "Stage": "prod"
+      }
     }
   }
 }

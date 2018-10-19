@@ -99,7 +99,19 @@ Note: the policy in ``.chalice/policy-dev.json`` assumes that the thumbnails buc
 
 ## Deploying
 
-See bash ``./scripts/deploy.sh`` as well as [Chalice](https://github.com/aws/chalice/) for more information.
+Deploying to *dev* stage.
+
+```bash
+chalice deploy
+```
+
+Deploying to *prod* stage.
+
+```bash
+chalice deploy --stage prod
+```
+
+See as [Chalice](https://github.com/aws/chalice/) for more information.
 
 It is a good idea to make the [AWS API Gateway](https://aws.amazon.com/api-gateway/)
 an origin of a [AWS CloudFront](https://aws.amazon.com/cloudfront/) distribution (or another CDN).
