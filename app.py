@@ -1,15 +1,15 @@
 from chalice import Chalice, Response, BadRequestError, NotFoundError, ForbiddenError
 import urllib.parse
 from hashlib import md5
-from os import environ as env
+from os import getenv
 import logging
 import traceback
-from chalicelib.image_editor import resize_image_data, MIN_LONG_EDGE, MAX_LONG_EDGE
+from chalicelib.image_editor import resize_image_data, LONG_EDGE_MIN, LONG_EDGE_MAX
 from chalicelib.cache import S3Cache
 from chalicelib.vfile import S3File, InvalidURIException, NotFoundException, ForbiddenException
 
 
-DEBUG = env.get('DEBUG') == '1'
+DEBUG = getenv('DEBUG') == '1'
 
 if DEBUG:
     logging.basicConfig(level=logging.INFO)
@@ -22,18 +22,19 @@ app.log.setLevel(logging.INFO)
 
 
 # see http://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/Expiration.html#expiration-individual-objects 
-try:
-    CONTENT_AGE_IN_SECONDS = int(env.get('CONTENT_AGE_IN_SECONDS'))
-except:
-    CONTENT_AGE_IN_SECONDS = 10*60
-app.log.info("CONTENT_AGE_IN_SECONDS = {0}".format(CONTENT_AGE_IN_SECONDS))
+CONTENT_AGE_IN_SECONDS = int(getenv('CONTENT_AGE_IN_SECONDS', 10*60))
 
-
-cache_bucket = env.get('CACHE_BUCKET') 
-if cache_bucket is not None and len(cache_bucket) > 4:
-    cache = S3Cache(cache_bucket)
+CACHE_BUCKET = getenv('CACHE_BUCKET')
+if CACHE_BUCKET is not None and len(CACHE_BUCKET) > 4:
+    cache = S3Cache(CACHE_BUCKET)
 else:
     cache = None
+
+# print the configuration
+app.log.info("LONG_EDGE_MIN = {0}".format(LONG_EDGE_MIN))
+app.log.info("LONG_EDGE_MAX = {0}".format(LONG_EDGE_MAX))
+app.log.info("CONTENT_AGE_IN_SECONDS = {0}".format(CONTENT_AGE_IN_SECONDS))
+app.log.info("CACHE_BUCKET = {0}".format(CACHE_BUCKET))
 
 
 def _find_thumbnail_data(uri, long_edge_pixels):
@@ -91,9 +92,9 @@ def thumbnail(uri, long_edge_pixels):
         long_edge_pixels = int(long_edge_pixels)
     except ValueError:
         raise BadRequestError("long-edge must be an integer")
-    if long_edge_pixels < MIN_LONG_EDGE or long_edge_pixels > MAX_LONG_EDGE:
+    if long_edge_pixels < LONG_EDGE_MIN or long_edge_pixels > LONG_EDGE_MAX:
         raise BadRequestError("long-edge must be >= {min_value} and <= {max_value}"
-                              .format(min_value=MIN_LONG_EDGE, max_value=MAX_LONG_EDGE))
+                              .format(min_value=LONG_EDGE_MIN, max_value=LONG_EDGE_MAX))
     app.log.info("Requested: %s @ %d" % (uri, long_edge_pixels))
     uri_prefix = request.headers.get('URI-Prefix')
     if uri_prefix is not None:

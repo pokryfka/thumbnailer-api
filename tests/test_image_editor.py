@@ -1,6 +1,6 @@
 import pytest
 import os
-from chalicelib.image_editor import resize_image_data, MIN_LONG_EDGE, MAX_LONG_EDGE
+from chalicelib.image_editor import resize_image_data, LONG_EDGE_MIN, LONG_EDGE_MAX
 from chalicelib.vfile import vfile
 
 # TODO: clean up paths
@@ -27,8 +27,8 @@ thumbnail_valid_sizes = [
 
 thumbnail_invalid_sizes = [
     0,
-    MIN_LONG_EDGE - 1,
-    MAX_LONG_EDGE + 1
+    LONG_EDGE_MIN - 1,
+    LONG_EDGE_MAX + 1
 ]
 
 

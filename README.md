@@ -15,7 +15,7 @@ where:
 
 Supported URIs:
 
-- *s3://bucket/key* - [AWS S3](https://aws.amazon.com/s3/) object, example *s3://pokryfka-test2/photoinfo/test1.jpg*
+- *s3://bucket/key* - [AWS S3](https://aws.amazon.com/s3/) object, example *s3://bucket_name/path/file.jpg*
 
 The *{uri}* has to be URL encoded, example in Python:
 
@@ -55,6 +55,13 @@ pip install virtualenv
 
 virtualenv venv
 source venv/bin/activate
+```
+
+Note: **make sure you are using  python3.6**.
+
+Install required libraries:
+
+```bash
 pip install -r requirements.txt
 ```
 
@@ -64,11 +71,19 @@ Set *AWS_PROFILE* to override the default profile when testing local.
 
 ## Configuration
 
-### Caching
+Configuration is set using environmental variables.
 
-Set *CACHE_BUCKET* in ``.chalice/config.json`` to cache thumbnails on [AWS S3](https://aws.amazon.com/s3/).
-Note that the policy in ``.chalice/policy-dev.json`` assumes that the thumbnails bucket name ends with *thumbnails*.
- 
+Values set when deploying the package are set in ``.chalice/config.json``.
+
+- *DEBUG* - set to 1 to change debug level
+- *LONG_EDGE_MIN* - minimum value of requested image width or height in pixels, default value 100
+- *LONG_EDGE_MAX* - maximum value of requested image width or height in pixels, default value 2000
+- *CONTENT_AGE_IN_SECONDS* - sets TTL returned in *Cache-Control* header, see [expiration-individual-objects](http://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/Expiration.html#expiration-individual-objects), default value 600 seconds
+- *CACHE_BUCKET* - (optional) bucket to cache thumbnails
+
+Note: the policy in ``.chalice/policy-dev.json`` assumes that the thumbnails bucket name ends with *thumbnails*.
+
+
 ## Deploying
 
 See bash ``./scripts/deploy.sh`` as well as [Chalice](https://github.com/aws/chalice/) for more information.
