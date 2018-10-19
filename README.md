@@ -1,4 +1,4 @@
-# thumbnail-api
+# thumbnailer-api
 
 REST interface to create thumbnails of images stored on AWS S3.
 
@@ -6,7 +6,7 @@ Thumbnails are optionally cached on (another) S3 bucket.
 
 ## API
 
-```GET /thumbnail/{uri}/long-edge/{long_edge_pixels}```
+```GET /thumbnailer/thumbnail/{uri}/long-edge/{long_edge_pixels}```
 
 where:
 
@@ -15,7 +15,7 @@ where:
 
 returns a sized version of the image, aspect ratio is not changed;
 
-```GET /thumbnail/{uri}/fit/width/{width}/height/{height}```
+```GET /thumbnailer/fit/{uri}/width/{width}/height/{height}```
 
 where:
 

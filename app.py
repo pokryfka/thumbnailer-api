@@ -88,7 +88,7 @@ def _image_data_response(data, cached=False):
                     headers=headers)
 
 
-@app.route('/thumbnail/{uri}/long-edge/{long_edge_pixels}',
+@app.route('/thumbnailer/thumbnail/{uri}/long-edge/{long_edge_pixels}',
            methods=['GET'],
            cors=True, api_key_required=True)
 def thumbnail(uri, long_edge_pixels):
@@ -137,7 +137,7 @@ def thumbnail(uri, long_edge_pixels):
             raise ChaliceViewError
 
 
-@app.route('/thumbnail/{uri}/fit/width/{width}/height/{height}',
+@app.route('/thumbnailer/fit/{uri}/width/{width}/height/{height}',
            methods=['GET'],
            cors=True, api_key_required=True)
 def thumbnail(uri, width, height):
