@@ -4,7 +4,7 @@ from hashlib import md5
 from os import getenv
 import logging
 import traceback
-from chalicelib.image_editor import resize_image_data, LONG_EDGE_MIN, LONG_EDGE_MAX
+from chalicelib.image_editor import LONG_EDGE_MIN, LONG_EDGE_MAX, resize_image_data, fit_image_data
 from chalicelib.cache import S3Cache
 from chalicelib.vfile import S3File, InvalidURIException, NotFoundException, ForbiddenException
 
@@ -37,7 +37,7 @@ app.log.info("CONTENT_AGE_IN_SECONDS = {0}".format(CONTENT_AGE_IN_SECONDS))
 app.log.info("CACHE_BUCKET = {0}".format(CACHE_BUCKET))
 
 
-def _find_thumbnail_data(uri, long_edge_pixels):
+def _find_cached_thumbnail_data(uri, long_edge_pixels):
     # TODO: check if all Exceptions are handled
     cached = cache.list_cached_uris(uri, long_edge_pixels)
     if len(cached) > 0:
@@ -59,6 +59,13 @@ def _create_thumbnail_data(uri, long_edge_pixels):
     # TODO: check if all Exceptions are handled
     data = S3File(uri).read()
     thumb_data = resize_image_data(data, long_edge_pixels)
+    return thumb_data
+
+
+def _create_fit_data(uri, width, height):
+    # TODO: check if all Exceptions are handled
+    data = S3File(uri).read()
+    thumb_data = fit_image_data(data, width, height)
     return thumb_data
 
 
@@ -112,6 +119,63 @@ def thumbnail(uri, long_edge_pixels):
             image_data = _create_thumbnail_data(uri, long_edge_pixels)
             if cache is not None:
                 _cache_thumbnail_data(image_data, uri, long_edge_pixels)
+        if image_data is None: # should not happen
+            raise NotFoundError
+        return _image_data_response(image_data, cached)
+    except InvalidURIException as e:
+        raise BadRequestError(e.message)
+    except NotFoundException as e:
+        raise NotFoundError(e.message)
+    except ForbiddenException as e:
+        raise ForbiddenError(e.message)
+    except:
+        if DEBUG:
+            error = traceback.format_exc()
+            app.log.error("%s" % error)
+            raise BadRequestError(error)
+        else:
+            raise ChaliceViewError
+
+
+@app.route('/thumbnail/{uri}/fit/width/{width}/height/{height}',
+           methods=['GET'],
+           cors=True, api_key_required=True)
+def thumbnail(uri, width, height):
+    request = app.current_request
+    app.log.debug("Request: %s" % request.to_dict())
+    uri = urllib.parse.unquote_plus(uri)
+    try:
+        width = int(width)
+    except ValueError:
+        raise BadRequestError("width must be an integer")
+    try:
+        height = int(height)
+    except ValueError:
+        raise BadRequestError("height must be an integer")
+    if width < LONG_EDGE_MIN or width > LONG_EDGE_MAX:
+        raise BadRequestError("width must be >= {min_value} and <= {max_value}"
+                              .format(min_value=LONG_EDGE_MIN, max_value=LONG_EDGE_MAX))
+    if height < LONG_EDGE_MIN or width > LONG_EDGE_MAX:
+        raise BadRequestError("height must be >= {min_value} and <= {max_value}"
+                              .format(min_value=LONG_EDGE_MIN, max_value=LONG_EDGE_MAX))
+    app.log.info("Requested: %s fit to (%d, %d)" % (uri, width, height))
+    uri_prefix = request.headers.get('URI-Prefix')
+    if uri_prefix is not None:
+        app.log.info("URI-Prefix: {0}".format(uri_prefix))
+        uri = uri_prefix + uri
+    if cache is not None:
+        app.log.info("CACHE_BUCKET = {0}".format(cache.bucket_name))
+    try:
+        image_data = None
+        # TODO: implement local caching for fit images
+        cached = False
+        #if cache is not None:
+        #    image_data = _find_fit_data(uri, width, height)
+        #    cached = image_data is not None
+        if image_data is None:
+            image_data = _create_fit_data(uri, width, height)
+        #    if cache is not None:
+        #        _cache_fit_data(image_data, uri, width, height)
         if image_data is None: # should not happen
             raise NotFoundError
         return _image_data_response(image_data, cached)

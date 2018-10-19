@@ -6,18 +6,31 @@ Thumbnails are optionally cached on (another) S3 bucket.
 
 ## API
 
-GET /thumbnail/{uri}/long-edge/{long_edge_pixels}
+```GET /thumbnail/{uri}/long-edge/{long_edge_pixels}```
 
 where:
 
 - *{uri}* - URL encoded URI of the original image
 - *{long_edge_pixels}* - size in pixels of the long edge
 
+returns a sized version of the image, aspect ratio is not changed;
+
+```GET /thumbnail/{uri}/fit/width/{width}/height/{height}```
+
+where:
+
+- *{uri}* - URL encoded URI of the original image
+- *{width}* - requested image width in pixels
+- *{height}* - requested image height in pixels
+
+returns a sized and cropped version of the image, cropped to the requested aspect ratio and size
+
 Supported URIs:
 
 - *s3://bucket/key* - [AWS S3](https://aws.amazon.com/s3/) object, example *s3://bucket_name/path/file.jpg*
 
 The *{uri}* has to be URL encoded, example in Python:
+
 
 ```python
 import urllib.parse
