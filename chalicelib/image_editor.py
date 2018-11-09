@@ -44,6 +44,8 @@ def resize_image_data(data, long_edge_pixels, dont_enlarge=True):
         return data
     th_res = (long_edge_pixels, long_edge_pixels)
     im.thumbnail(th_res, resample=RESAMPLE_FILTER)
+    if im.mode != 'RGB':
+        im = im.convert('RGB')
     th_res = im.size
     output = BytesIO()
     im.save(output, 'JPEG', **JPEG_OPTS)
@@ -80,6 +82,8 @@ def fit_image_data(data, width, height):
     im_res = im.size
     th_res = (width, height)
     im = image_fit(im, th_res, method=RESAMPLE_FILTER)
+    if im.mode != 'RGB':
+        im = im.convert('RGB')
     th_res = im.size
     output = BytesIO()
     im.save(output, 'JPEG', **JPEG_OPTS)
