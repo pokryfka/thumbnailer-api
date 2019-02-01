@@ -1,6 +1,6 @@
 from os import getenv
 from io import BytesIO
-from PIL import Image
+from PIL import Image, ExifTags
 from PIL.ImageOps import fit as image_fit
 import logging
 
@@ -81,6 +81,7 @@ def fit_image_data(data, width, height):
     im = Image.open(b)
     im_res = im.size
     th_res = (width, height)
+    im = _process_exif_data(im)
     im = image_fit(im, th_res, method=RESAMPLE_FILTER)
     if im.mode != 'RGB':
         im = im.convert('RGB')
@@ -92,3 +93,21 @@ def fit_image_data(data, width, height):
     logger.info("Fit {im_res[0]}x{im_res[1]} {im_size} bytes to {th_res[0]}x{th_res[1]} {th_size} bytes"
                 .format(im_res=im_res, im_size=len(data), th_res=th_res, th_size=len(outdata)))
     return outdata
+
+
+def _process_exif_data(img):
+    try:
+        for orientation in ExifTags.TAGS.keys():
+            if ExifTags.TAGS[orientation] == 'Orientation':
+                break
+        exif = dict(img._getexif().items())
+
+        if exif[orientation] == 3:
+            img = img.rotate(180, expand=True)
+        elif exif[orientation] == 6:
+            img = img.rotate(270, expand=True)
+        elif exif[orientation] == 8:
+            img = img.rotate(90, expand=True)
+    except Exception:
+        pass
+    return img
