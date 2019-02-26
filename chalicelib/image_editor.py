@@ -43,6 +43,7 @@ def resize_image_data(data, long_edge_pixels, dont_enlarge=True):
                     .format(long_edge_pixels, im_res=im_res))
         return data
     th_res = (long_edge_pixels, long_edge_pixels)
+    im = _process_exif_data(im)
     im.thumbnail(th_res, resample=RESAMPLE_FILTER)
     if im.mode != 'RGB':
         im = im.convert('RGB')
