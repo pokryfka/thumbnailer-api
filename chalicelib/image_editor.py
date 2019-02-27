@@ -1,8 +1,9 @@
 from os import getenv
 from io import BytesIO
-from PIL import Image, ExifTags
+from PIL import Image
 from PIL.ImageOps import fit as image_fit
 import logging
+import functools
 
 
 logger = logging.getLogger(__name__)
@@ -96,19 +97,33 @@ def fit_image_data(data, width, height):
     return outdata
 
 
-def _process_exif_data(img):
-    try:
-        for orientation in ExifTags.TAGS.keys():
-            if ExifTags.TAGS[orientation] == 'Orientation':
-                break
-        exif = dict(img._getexif().items())
+def _process_exif_data(im):
+    # Ref: https://stackoverflow.com/questions/4228530/pil-thumbnail-is-rotating-my-image  # NOQA
+    """
+        Apply Image.transpose to ensure 0th row of pixels is at the visual
+        top of the image, and 0th column is the visual left-hand side.
+        Return the original image if unable to determine the orientation.
 
-        if exif[orientation] == 3:
-            img = img.rotate(180, expand=True)
-        elif exif[orientation] == 6:
-            img = img.rotate(270, expand=True)
-        elif exif[orientation] == 8:
-            img = img.rotate(90, expand=True)
+        As per CIPA DC-008-2012, the orientation field contains an integer,
+        1 through 8. Other values are reserved.
+    """
+
+    exif_orientation_tag = 0x0112
+    exif_transpose_sequences = [                   # Val  0th row  0th col
+        [],                                        #  0    (reserved)
+        [],                                        #  1   top      left
+        [Image.FLIP_LEFT_RIGHT],                   #  2   top      right
+        [Image.ROTATE_180],                        #  3   bottom   right
+        [Image.FLIP_TOP_BOTTOM],                   #  4   bottom   left
+        [Image.FLIP_LEFT_RIGHT, Image.ROTATE_90],  #  5   left     top
+        [Image.ROTATE_270],                        #  6   right    top
+        [Image.FLIP_TOP_BOTTOM, Image.ROTATE_90],  #  7   right    bottom
+        [Image.ROTATE_90],                         #  8   left     bottom
+    ]
+
+    try:
+        seq = exif_transpose_sequences[im._getexif()[exif_orientation_tag]]
     except Exception:
-        pass
-    return img
+        return im
+    else:
+        return functools.reduce(type(im).transpose, seq, im)
