@@ -25,6 +25,8 @@ where:
 
 returns a sized and cropped version of the image, cropped to the requested aspect ratio and size
 
+(results from fit method are not cached in CACHE_BUCKET)
+
 Supported URIs:
 
 - *s3://bucket/key* - [AWS S3](https://aws.amazon.com/s3/) object, example *s3://bucket_name/path/file.jpg*
@@ -43,7 +45,7 @@ uri_decoded = urllib.parse.unquote_plus(uri_encoded)
 Example query (using [HTTPie](https://httpie.org) HTTP client), note the *Accept* header:
 
 ```bash
-http -v -d ${BASE_URL}/thumbnail/s3%3A%2F%2Fbucket_name%2Fpath%2Ffile.jpg/long-edge/200 \
+http -v -d ${BASE_URL}/thumbnailer/thumbnail/s3%3A%2F%2Fbucket_name%2Fpath%2Ffile.jpg/long-edge/200 \
     Accept:image/jpg \
     X-API-Key:xxx
 ```
@@ -51,7 +53,7 @@ http -v -d ${BASE_URL}/thumbnail/s3%3A%2F%2Fbucket_name%2Fpath%2Ffile.jpg/long-e
 URI prefix can be optionally send as HTTP header:
 
 ```bash
-http -v -d ${BASE_URL}/thumbnail/path%2Ffile.jpg/long-edge/200 \
+http -v -d ${BASE_URL}/thumbnailer/thumbnail/path%2Ffile.jpg/long-edge/200 \
     Accept:image/jpg \
     URI-Prefix:s3://bucket_name/ \
     X-API-Key:xxx
