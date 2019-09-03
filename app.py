@@ -74,7 +74,7 @@ def _image_data_response(data, cached=False):
     checksum.update(data)
     headers = {
         #'Content-Length': str(len(data)), # seems Chalice adds it anyway
-        'Content-Type': 'image/jpg',
+        'Content-Type': 'image/jpeg',
         'ETag': checksum.hexdigest(),
         'Cache-Control': "max-age={0}".format(CONTENT_AGE_IN_SECONDS)
     }
