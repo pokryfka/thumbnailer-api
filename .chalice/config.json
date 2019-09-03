@@ -26,7 +26,7 @@
     "prod": {
       "api_gateway_stage": "prod",
       "iam_policy_file": "policy-dev.json",
-      "lambda_memory_size": 256,
+      "lambda_memory_size": 512,
       "environment_variables": {
         "CONTENT_AGE_IN_SECONDS": "3600"
       },
