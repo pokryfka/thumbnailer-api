@@ -9,7 +9,7 @@ from response_types import (
     ForbiddenResponse,
 )
 from urllib.parse import unquote_plus
-from config import handle_error
+from config import handle_error, CONTENT_AGE_IN_SECONDS
 from vfile import S3File, InvalidURIException, NotFoundException, ForbiddenException
 from image_editor import get_size_image_data, resize_image_data, fit_image_data
 import logging
@@ -17,6 +17,8 @@ import logging
 INFO_RESOURCE_PREFIX = "/thumbnailer/info/"
 THUMBNAIL_RESOURCE_PREFIX = "/thumbnailer/thumbnail/"
 FIT_RESOURCE_PREFIX = "/thumbnailer/fit/"
+
+CONTENT_HEADERS = {"Cache-Control": "max-age={0}".format(CONTENT_AGE_IN_SECONDS)}
 
 
 def lambda_handler(event, context):
@@ -58,14 +60,14 @@ def lambda_handler(event, context):
             data = S3File(uri).read()
             thumb_data = resize_image_data(data, long_edge_pixels)
             return BinaryResultResponse(
-                data=thumb_data, content_type="image/jpg"
+                data=thumb_data, content_type="image/jpg", headers=CONTENT_HEADERS
             ).dict()
 
         elif event.resource.startswith(FIT_RESOURCE_PREFIX):
             data = S3File(uri).read()
             thumb_data = fit_image_data(data, width_pixels, height_pixels)
             return BinaryResultResponse(
-                data=thumb_data, content_type="image/jpg"
+                data=thumb_data, content_type="image/jpg", headers=CONTENT_HEADERS
             ).dict()
 
         assert False

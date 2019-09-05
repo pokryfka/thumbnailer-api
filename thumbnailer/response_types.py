@@ -47,9 +47,10 @@ class JSONResultResponse(ResultResponse):
 
 
 class BinaryResultResponse(ResultResponse):
-    def __init__(self, data, content_type):
+    def __init__(self, data, content_type, headers={}):
         super().__init__()
 
         self.isBase64Encoded = True
-        self.headers = {"content-type": content_type}
+        headers["Content-Type"] = content_type
+        self.headers = headers
         self.body = b64encode(data).decode("utf-8")
