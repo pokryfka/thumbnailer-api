@@ -1,3 +1,4 @@
 aws-xray-sdk
 pydantic
+requests
 Pillow

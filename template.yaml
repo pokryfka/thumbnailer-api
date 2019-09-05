@@ -1,34 +1,27 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: >
-  thumbnailer-api
+Description: SAM Template for Thumbnailer API stack.
 
-  SAM Template for Thumbnailer API.
-
-Parameters:
-  AuthClientId:
-    Type: String
-    Description: Client Id
-
-# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
+  Api:
+    BinaryMediaTypes:
+      - image~1jpg
+      - image~1png
   Function:
     Runtime: python3.7
-    MemorySize: 256
+    MemorySize: 512
     Timeout: 10
     Tracing: Active
     Environment:
       Variables:
         LOG_LEVEL: INFO
-        AUTH_CLIENT_ID: !Ref AuthClientId
 
 Resources:
   ThumbnailerFunction:
-    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Type: AWS::Serverless::Function
     Properties:
       CodeUri: thumbnailer/
       Handler: app.lambda_handler
-      MemorySize: 512
       Policies:
         - AWSXrayWriteOnlyAccess
         - Version: '2012-10-17' # Policy Document
@@ -38,29 +31,24 @@ Resources:
                 - s3:Get*
               Resource:
                 - '*'
-
       Events:
+        InfoAPI:
+          Type: Api
+          Properties:
+            Path: /thumbnailer/info/{uri}
+            Method: get
         ThumbmnailAPI:
-          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Type: Api
           Properties:
             Path: /thumbnailer/thumbnail/{uri}/long-edge/{long_edge_pixels}
             Method: get
         FitAPI:
-          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Type: Api
           Properties:
-            Path: /thumbnailer/fit/{uri}/width/{width}/height/{height}
+            Path: /thumbnailer/fit/{uri}/width/{width_pixels}/height/{height_pixels}
             Method: get
 
-  PicturesBucket:
-    Type: AWS::S3::Bucket # see https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-s3-bucket.html
-
 Outputs:
-  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
-  # Find out more about other implicit resources you can reference within SAM
-  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
-  AuthApi:
+  ThumbnailerApi:
     Description: "API Gateway endpoint URL for Prod stage for Thumbnailer function"
     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/thumbnailer"
-  AuthFunction:
-    Description: "Thumbnailer Lambda Function ARN"
-    Value: !GetAtt ThumbnailerFunction.Arn

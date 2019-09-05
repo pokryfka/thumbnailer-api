@@ -1,5 +1,10 @@
 TEMPLATE_FILE=.aws-sam/packaged.yaml
 
+TEST_API_URL="http://localhost:3000/thumbnailer"
+#TEST_API_URL="https://zcp3bjft0k.execute-api.us-east-1.amazonaws.com/Prod/thumbnailer"
+#TEST_ENCODED_URI="s3%3A%2F%2Fmyx-auth-dev-picturesbucket-2rm0spux6ue7%2Fprofile%2Ffb%2Ffb485679945593934.jpg"
+TEST_ENCODED_URI="URI"
+
 .PHONY: clean
 clean:
 	rm -rf .aws-sam
@@ -19,25 +24,27 @@ deploy: package
 	sam deploy \
 	    --template-file ${TEMPLATE_FILE} \
 	    --stack-name ${STACK_NAME} \
-		--capabilities CAPABILITY_IAM \
-		--parameter-overrides \
-	      AuthClientId=${AUTH_CLIENT_ID} \
+		--capabilities CAPABILITY_IAM
 	aws cloudformation describe-stacks \
     	--stack-name ${STACK_NAME} --query 'Stacks[].Outputs'
 
 .PHONY: logs
 logs:
-	sam logs -n FacebookAuthFunction --stack-name ${STACK_NAME} --tail
+	sam logs -n ThumbnailerFunction --stack-name ${STACK_NAME} --tail
 
-.PHONY: test
+.PHONY: test-info
+test-info:
+	curl ${TEST_API_URL}/info/${TEST_ENCODED_URI}
+
+.PHONY: test-th
 test-th:
 	curl -H "Accept: image/jpg" \
-	  http://localhost:3000/thumbnailer/thumbnail/URI/long-edge/200
+	  ${TEST_API_URL}/thumbnail/${TEST_ENCODED_URI}/long-edge/222 > test.jpg
 
-.PHONY: test
+.PHONY: test-fit
 test-fit:
 	curl -H "Accept: image/jpg" \
-	  http://localhost:3000/thumbnailer/fit/URI/width/200/height/100
+	  ${TEST_API_URL}/fit/${TEST_ENCODED_URI}/width/200/height/100 > test.jpg
 
 .PHONY: local
 local: build
