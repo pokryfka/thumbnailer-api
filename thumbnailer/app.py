@@ -18,6 +18,7 @@ INFO_RESOURCE_PREFIX = "/thumbnailer/info/"
 THUMBNAIL_RESOURCE_PREFIX = "/thumbnailer/thumbnail/"
 FIT_RESOURCE_PREFIX = "/thumbnailer/fit/"
 
+URI_PREFIX_HEADER = "Uri-Prefix"
 CONTENT_HEADERS = {"Cache-Control": "max-age={0}".format(CONTENT_AGE_IN_SECONDS)}
 
 
@@ -29,9 +30,11 @@ def lambda_handler(event, context):
         logging.info("ApiEvent: {}".format(event.dict()))
         try:
             uri_encoded = event.pathParameters["uri"]
-            # TODO: decode
-            uri_encoded = "s3%3A%2F%2Fmyx-auth-dev-picturesbucket-2rm0spux6ue7%2Fprofile%2Ffb%2Ffb485679945593934.jpg"
             uri = unquote_plus(uri_encoded)
+            uri_prefix = event.headers.get(URI_PREFIX_HEADER) or ""
+            logging.info("{}: {}".format(URI_PREFIX_HEADER, uri_prefix))
+            uri = "{}{}".format(uri_prefix, uri)
+            logging.info("URI: {}".format(uri))
             if event.resource.startswith(INFO_RESOURCE_PREFIX):
                 # TODO: pointer to function
                 pass
