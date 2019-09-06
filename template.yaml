@@ -120,6 +120,8 @@ Resources:
           - PathPattern: "thumbnailer/*"
             Compress: false
             ForwardedValues:
+              Headers:
+                - "Uri-Prefix"
               QueryString: false
             TargetOriginId: !Ref ThumbnailerFunction
             ViewerProtocolPolicy: redirect-to-https
