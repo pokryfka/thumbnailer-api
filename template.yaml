@@ -93,6 +93,13 @@ Resources:
             QueryString: false
           TargetOriginId: !Ref CloudFrontOriginBucket
           ViewerProtocolPolicy: redirect-to-https
+        CacheBehaviors:
+          - PathPattern: "thumbnailer/*"
+            Compress: false
+            ForwardedValues:
+              QueryString: false
+            TargetOriginId: !Ref ThumbnailerFunction
+            ViewerProtocolPolicy: redirect-to-https
         Enabled: true
         HttpVersion: http2
         Origins:
@@ -102,6 +109,14 @@ Resources:
             S3OriginConfig:
               OriginAccessIdentity:
                 !Join [ "", [ "origin-access-identity/cloudfront/", !Ref CloudFrontOriginAccessIdentity ] ]
+          - DomainName: !Sub  "${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com"
+            Id: !Ref ThumbnailerFunction
+            OriginPath: "/Prod"
+            OriginCustomHeaders:
+              - HeaderName: Accept
+                HeaderValue: "image/jpg"
+            CustomOriginConfig:
+              OriginProtocolPolicy: https-only
         PriceClass: !Ref CloudFrontPriceClass
 
 Outputs:
