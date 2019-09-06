@@ -69,13 +69,21 @@ Resources:
 
   ThumbnailerApiUsagePlan:
     Type: AWS::ApiGateway::UsagePlan
+    DependsOn:
+      - ServerlessRestApi
+      #- ServerlessRestApiProdStage # TEST
+      #- !Ref ServerlessRestApi.Stage
+      - CloudFrontDistribution # TODO: workaround for: API Stage not found: j0g3n8waa4:Prod (Service: AmazonApiGateway;
     Properties:
       ApiStages:
-        - ApiId: !Sub  "${ServerlessRestApi}"
-          Stage: Prod
+        - ApiId: !Ref ServerlessRestApi
+          Stage: !Ref ServerlessRestApi.Stage
 
   ThumbnailerApiUsagePlanKey:
     Type: AWS::ApiGateway::UsagePlanKey
+    DependsOn:
+      - ThumbnailerApiKey
+      - ThumbnailerApiUsagePlan
     Properties:
       KeyId: !Ref ThumbnailerApiKey
       KeyType: API_KEY
