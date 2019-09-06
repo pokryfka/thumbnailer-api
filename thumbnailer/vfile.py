@@ -162,23 +162,6 @@ class LocalFile(VFile):
             return False
 
 
-# import boto3
-# from botocore.exceptions import ClientError
-# from botocore.client import Config
-
-# AWS_ACCESS_KEY=''
-# AWS_SECRET_ACCESS_KEY=''
-
-# AWS_CONFIG=dict(aws_access_key_id=AWS_ACCESS_KEY,
-#                aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-#                config=Config(signature_version='s3v4'))
-
-# s3_client = boto3.client('s3', **AWS_CONFIG)
-# s3_client = boto3.client('s3')
-
-# TODO: bucket was renamed to bucket_name - change in photoinfo
-
-
 class S3File(VFile):
 
     # TODO: this is supposed to be a singleton, is there a better way to do it in Python?

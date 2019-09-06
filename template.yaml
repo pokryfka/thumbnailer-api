@@ -152,5 +152,6 @@ Outputs:
     Description: "Thumbnailer API URL"
     Value: !Join [ "", [ !GetAtt CloudFrontDistribution.DomainName, "/thumbnailer"  ] ]
   ThumbnailerApiKey:
-    Description: "X-API-Key"
+    #get-api-key --include-value --api-key e9qjdj1k48
+    Description: "X-API-Key, check the value!"
     Value: !Ref ThumbnailerApiKey

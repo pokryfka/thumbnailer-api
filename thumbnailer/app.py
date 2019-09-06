@@ -1,4 +1,4 @@
-from json import dumps as json_dumps
+# from json import dumps as json_dumps
 from api_event_type import ApiEvent, ValidationError
 from response_types import (
     JSONResultResponse,
@@ -23,7 +23,7 @@ CONTENT_HEADERS = {"Cache-Control": "max-age={0}".format(CONTENT_AGE_IN_SECONDS)
 
 
 def lambda_handler(event, context):
-    logging.info("Received event: {}".format(json_dumps(event, indent=2)))
+    # logging.debug("Received event: {}".format(json_dumps(event, indent=2)))
 
     try:
         event = ApiEvent(**event)
