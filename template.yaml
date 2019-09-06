@@ -11,6 +11,12 @@ Parameters:
       - 'PriceClass_100'
       - 'PriceClass_200'
       - 'PriceClass_All'
+#  ApiKeyRequired:
+#    Type: String
+#    Default: false
+#    AllowedValues:
+#      - true
+#      - false
 
 Globals:
   Api:
@@ -57,6 +63,23 @@ Resources:
           Properties:
             Path: /thumbnailer/fit/{uri}/width/{width_pixels}/height/{height_pixels}
             Method: get
+
+  ThumbnailerApiKey:
+    Type: AWS::ApiGateway::ApiKey
+
+  ThumbnailerApiUsagePlan:
+    Type: AWS::ApiGateway::UsagePlan
+    Properties:
+      ApiStages:
+        - ApiId: !Sub  "${ServerlessRestApi}"
+          Stage: Prod
+
+  ThumbnailerApiUsagePlanKey:
+    Type: AWS::ApiGateway::UsagePlanKey
+    Properties:
+      KeyId: !Ref ThumbnailerApiKey
+      KeyType: API_KEY
+      UsagePlanId: !Ref ThumbnailerApiUsagePlan
 
   CloudFrontOriginBucket:
     Type: AWS::S3::Bucket
@@ -120,9 +143,12 @@ Resources:
         PriceClass: !Ref CloudFrontPriceClass
 
 Outputs:
-  ThumbnailerApi:
+  ThumbnailerApiUrl:
     Description: "API Gateway endpoint URL for Prod stage for Thumbnailer function"
     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/thumbnailer"
-  CdnApi:
+  CdnApiUrl:
     Description: "Thumbnailer API URL"
     Value: !Join [ "", [ !GetAtt CloudFrontDistribution.DomainName, "/thumbnailer"  ] ]
+  ThumbnailerApiKey:
+    Description: "X-API-Key"
+    Value: !Ref ThumbnailerApiKey
