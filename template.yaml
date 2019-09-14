@@ -20,18 +20,19 @@ Parameters:
   ContentAge:
     Type: Number
     Description: The value (in seconds) of Cache-Control header used to control how long objects stay in the cache.
-    Default: 86400
+    Default: 604800
     MinValue: 60
   LongEdgeMin:
     Type: Number
     Description: The smallest allowed value of image width or height.
     Default: 40
     MinValue: 40
+    MaxValue: 400
   LongEdgeMax:
     Type: Number
     Description: The biggest allowed value of image width or height.
     Default: 2000
-    MinValue: 200
+    MinValue: 400
     MaxValue: 4000
   Environment:
     Type: String
