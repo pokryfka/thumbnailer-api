@@ -33,6 +33,9 @@ Parameters:
     Default: 2000
     MinValue: 200
     MaxValue: 4000
+  SentryDsn:
+    Type: String
+    Description: Sentry DSN
 
 Globals:
   Api:
@@ -49,6 +52,7 @@ Globals:
     Environment:
       Variables:
         LOG_LEVEL: INFO
+        SENTRY_DSN: !Ref SentryDsn
 
 Resources:
   ThumbnailerFunction:

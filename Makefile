@@ -19,7 +19,9 @@ deploy: package
 	sam deploy \
 	    --template-file ${TEMPLATE_FILE} \
 	    --stack-name ${STACK_NAME} \
-		--capabilities CAPABILITY_IAM
+		--capabilities CAPABILITY_IAM \
+		--parameter-overrides \
+			SentryDsn=${SENTRY_DSN}
 	aws cloudformation describe-stacks \
     	--stack-name ${STACK_NAME} --query 'Stacks[].Outputs'
 
@@ -45,3 +47,7 @@ test-fit:
 .PHONY: local
 local: build
 	sam local start-api
+
+.PHONY: style
+style:
+	black thumbnailer

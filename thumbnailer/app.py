@@ -1,4 +1,3 @@
-# from json import dumps as json_dumps
 from api_event_type import ApiEvent, ValidationError
 from response_types import (
     JSONResultResponse,
@@ -23,8 +22,6 @@ CONTENT_HEADERS = {"Cache-Control": "max-age={0}".format(CONTENT_AGE_IN_SECONDS)
 
 
 def lambda_handler(event, context):
-    # logging.debug("Received event: {}".format(json_dumps(event, indent=2)))
-
     try:
         event = ApiEvent(**event)
         logging.info("ApiEvent: {}".format(event.dict()))
@@ -47,6 +44,9 @@ def lambda_handler(event, context):
                 assert False
         except KeyError:
             raise ValueError
+
+        # test sentry
+        #division_by_zero = 1 / 0
 
         if event.resource.startswith(INFO_RESOURCE_PREFIX):
             data = S3File(uri).read()
