@@ -36,10 +36,10 @@ Parameters:
   Environment:
     Type: String
     Default: DEV
-    AllowedValues:
-      - DEV
-      - QA
-      - PROD
+#    AllowedValues:
+#      - DEV
+#      - QA
+#      - PROD
   SentryDsn:
     Type: String
     Description: Sentry DSN
