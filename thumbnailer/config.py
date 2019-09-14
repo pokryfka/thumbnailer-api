@@ -1,7 +1,13 @@
 from os import getenv
 
-ENV = getenv("ENV")
-print("ENV: {}".format(ENV))
+ENV = getenv("ENV", "DEV")
+try:
+    with open("./version") as f:
+        VER = f.read()
+except FileNotFoundError:
+    version = "?"
+RELEASE = "thumbnailer-{}-{}".format(ENV.lower(), VER)
+print(RELEASE)
 
 LOG_LEVEL = getenv("LOG_LEVEL", "ERROR")
 
@@ -26,7 +32,9 @@ if SENTRY_DSN and SENTRY_DSN.startswith("https://"):
     import sentry_sdk
     from sentry_sdk.integrations.aws_lambda import AwsLambdaIntegration
 
-    sentry_sdk.init(dsn=SENTRY_DSN, integrations=[AwsLambdaIntegration()])
+    sentry_sdk.init(
+        dsn=SENTRY_DSN, release=RELEASE, integrations=[AwsLambdaIntegration()]
+    )
 
 # Logging
 

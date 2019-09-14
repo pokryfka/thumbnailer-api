@@ -33,6 +33,13 @@ Parameters:
     Default: 2000
     MinValue: 200
     MaxValue: 4000
+  Environment:
+    Type: String
+    Default: DEV
+    AllowedValues:
+      - DEV
+      - QA
+      - PROD
   SentryDsn:
     Type: String
     Description: Sentry DSN
@@ -51,6 +58,7 @@ Globals:
     Tracing: Active
     Environment:
       Variables:
+        ENV: !Ref Environment
         LOG_LEVEL: INFO
         SENTRY_DSN: !Ref SentryDsn
 

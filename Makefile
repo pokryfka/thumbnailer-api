@@ -8,8 +8,12 @@ clean:
 build:
 	sam build
 
+.PHONY: update_version
+update_version:
+	git describe --tags > thumbnailer/version
+
 .PHONY: package
-package: build
+package: build update_version
 	sam package \
 	    --output-template-file ${TEMPLATE_FILE} \
 	    --s3-bucket ${PACKAGE_BUCKET}
@@ -21,6 +25,7 @@ deploy: package
 	    --stack-name ${STACK_NAME} \
 		--capabilities CAPABILITY_IAM \
 		--parameter-overrides \
+			Environment=${ENV} \
 			SentryDsn=${SENTRY_DSN}
 	aws cloudformation describe-stacks \
     	--stack-name ${STACK_NAME} --query 'Stacks[].Outputs'
