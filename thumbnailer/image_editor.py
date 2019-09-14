@@ -4,8 +4,8 @@ from PIL import Image
 from PIL.ImageOps import fit as image_fit
 import logging
 import functools
-from config import add_annotation
-
+from config import put_annotation
+from aws_xray_sdk.core import xray_recorder
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +24,7 @@ JPEG_OPTS = dict(quality=75, optimize=True)
 # TODO: implement tests
 
 
+@xray_recorder.capture("get_size_image_data")
 def get_size_image_data(data):
     # TODO: possible to read from header, no need to read the image itself
     b = BytesIO(data)
@@ -31,6 +32,7 @@ def get_size_image_data(data):
     return im.size
 
 
+@xray_recorder.capture("resize_image_data")
 def resize_image_data(data, long_edge_pixels, dont_enlarge=True):
     """Resizes image data.
 
@@ -76,15 +78,16 @@ def resize_image_data(data, long_edge_pixels, dont_enlarge=True):
             im_res=im_res, im_size=len(data), th_res=th_res, th_size=len(outdata)
         )
     )
-    add_annotation("original_width", "{}".format(im_res[0]))
-    add_annotation("original_height", "{}".format(im_res[1]))
-    add_annotation("original_size", "{}".format(len(data)))
-    add_annotation("resized_width", "{}".format(th_res[0]))
-    add_annotation("resized_height", "{}".format(th_res[1]))
-    add_annotation("resized_size", "{}".format(len(outdata)))
+    put_annotation("original_width", "{}".format(im_res[0]))
+    put_annotation("original_height", "{}".format(im_res[1]))
+    put_annotation("original_size", "{}".format(len(data)))
+    put_annotation("resized_width", "{}".format(th_res[0]))
+    put_annotation("resized_height", "{}".format(th_res[1]))
+    put_annotation("resized_size", "{}".format(len(outdata)))
     return outdata
 
 
+@xray_recorder.capture("fit_image_data")
 def fit_image_data(data, width, height):
     """Fits image data that is
     returns a sized and cropped version of the image, cropped to the requested aspect ratio and size.
@@ -132,12 +135,12 @@ def fit_image_data(data, width, height):
             im_res=im_res, im_size=len(data), th_res=th_res, th_size=len(outdata)
         )
     )
-    add_annotation("original_width", "{}".format(im_res[0]))
-    add_annotation("original_height", "{}".format(im_res[1]))
-    add_annotation("original_size", "{}".format(len(data)))
-    add_annotation("resized_width", "{}".format(th_res[0]))
-    add_annotation("resized_height", "{}".format(th_res[1]))
-    add_annotation("resized_size", "{}".format(len(outdata)))
+    put_annotation("original_width", "{}".format(im_res[0]))
+    put_annotation("original_height", "{}".format(im_res[1]))
+    put_annotation("original_size", "{}".format(len(data)))
+    put_annotation("resized_width", "{}".format(th_res[0]))
+    put_annotation("resized_height", "{}".format(th_res[1]))
+    put_annotation("resized_size", "{}".format(len(outdata)))
     return outdata
 
 

@@ -19,22 +19,15 @@ CONTENT_AGE_IN_SECONDS = int(getenv("CONTENT_AGE_IN_SECONDS", 10 * 60))
 
 # X-Ray integration
 
-if LOCAL_ENV == False:
-    from aws_xray_sdk.core import patch_all
-    from aws_xray_sdk.core import xray_recorder
+from aws_xray_sdk.core import patch_all, xray_recorder
 
-    patch_all()
-
-    def add_annotation(key: str, value: str):
-        document = xray_recorder.current_segment()
-        if document:
-            document.put_annotation(key, value)
+patch_all()
 
 
-else:
-
-    def add_annotation(key: str, value: str):
-        pass
+def put_annotation(key: str, value: str):
+    segment = xray_recorder.current_subsegment()
+    if segment:
+        segment.put_annotation(key, value)
 
 
 # Sentry integration

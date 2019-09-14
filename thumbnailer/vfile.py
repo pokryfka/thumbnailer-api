@@ -3,6 +3,7 @@ Provides unified file interface to local file, AWS S3 object and HTTP(s) resourc
 """
 import os
 import logging
+from aws_xray_sdk.core import xray_recorder
 
 logger = logging.getLogger(__name__)
 
@@ -205,6 +206,7 @@ class S3File(VFile):
         except S3File._s3_client.exceptions.NoSuchKey:
             return False
 
+    @xray_recorder.capture("S3File.read")
     def read(self, size=-1):
         try:
             obj = S3File._s3_client.get_object(Bucket=self.bucket_name, Key=self.key)
@@ -221,6 +223,7 @@ class S3File(VFile):
             logger.error("Not allowed to read %s: %s" % (self.uri, e))
             raise ForbiddenException(self.uri, "read")
 
+    @xray_recorder.capture("S3File.write")
     def write(self, data):
         try:
             response = S3File._s3_client.put_object(
