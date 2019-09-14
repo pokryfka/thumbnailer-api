@@ -8,7 +8,9 @@ except FileNotFoundError:
 RELEASE = "thumbnailer-{}".format(VER)
 print("RELEASE: {}".format(RELEASE))
 ENV = getenv("ENV", "DEV")
+LOCAL_ENV = ENV.lower() == "LOCAL".lower()
 print("ENV: {}".format(ENV))
+print("LOCAL_ENV: {}".format(LOCAL_ENV))
 
 LOG_LEVEL = getenv("LOG_LEVEL", "ERROR")
 
@@ -17,7 +19,7 @@ CONTENT_AGE_IN_SECONDS = int(getenv("CONTENT_AGE_IN_SECONDS", 10 * 60))
 
 # X-Ray integration
 
-if ENV != "LOCAL":
+if LOCAL_ENV == False:
     from aws_xray_sdk.core import patch_all
     from aws_xray_sdk.core import xray_recorder
 

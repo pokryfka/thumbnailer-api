@@ -51,7 +51,7 @@ test-fit:
 
 .PHONY: local
 local: build
-	sam local start-api
+	sam local start-api --env-vars env-local.json
 
 .PHONY: style
 style:

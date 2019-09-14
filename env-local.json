@@ -1,0 +1,7 @@
+{
+    "ThumbnailerFunction": {
+        "ENV": "LOCAL",
+        "LOG_LEVEL": "INFO",
+        "SENTRY_DSN": ""
+    }
+}
