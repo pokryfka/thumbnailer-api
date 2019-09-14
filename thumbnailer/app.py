@@ -8,7 +8,7 @@ from response_types import (
     ForbiddenResponse,
 )
 from urllib.parse import unquote_plus
-from config import handle_error, CONTENT_AGE_IN_SECONDS
+from config import handle_error, add_annotation, CONTENT_AGE_IN_SECONDS
 from vfile import S3File, InvalidURIException, NotFoundException, ForbiddenException
 from image_editor import get_size_image_data, resize_image_data, fit_image_data
 import logging
@@ -32,21 +32,27 @@ def lambda_handler(event, context):
             logging.info("{}: {}".format(URI_PREFIX_HEADER, uri_prefix))
             uri = "{}{}".format(uri_prefix, uri)
             logging.info("URI: {}".format(uri))
+            add_annotation("uri", uri)
+            add_annotation("uri_encoded", uri_encoded)
+            add_annotation(URI_PREFIX_HEADER, uri_prefix)
             if event.resource.startswith(INFO_RESOURCE_PREFIX):
                 # TODO: pointer to function
                 pass
             elif event.resource.startswith(THUMBNAIL_RESOURCE_PREFIX):
                 long_edge_pixels = int(event.pathParameters["long_edge_pixels"])
+                add_annotation("long_edge", long_edge_pixels)
             elif event.resource.startswith(FIT_RESOURCE_PREFIX):
                 width_pixels = int(event.pathParameters["width_pixels"])
                 height_pixels = int(event.pathParameters["height_pixels"])
+                add_annotation("width", width_pixels)
+                add_annotation("height", height_pixels)
             else:
                 assert False
         except KeyError:
             raise ValueError
 
         # test sentry
-        #division_by_zero = 1 / 0
+        # division_by_zero = 1 / 0
 
         if event.resource.startswith(INFO_RESOURCE_PREFIX):
             data = S3File(uri).read()
