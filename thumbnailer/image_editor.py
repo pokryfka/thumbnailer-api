@@ -4,6 +4,7 @@ from PIL import Image
 from PIL.ImageOps import fit as image_fit
 import logging
 import functools
+from config import add_annotation
 
 
 logger = logging.getLogger(__name__)
@@ -75,6 +76,12 @@ def resize_image_data(data, long_edge_pixels, dont_enlarge=True):
             im_res=im_res, im_size=len(data), th_res=th_res, th_size=len(outdata)
         )
     )
+    add_annotation("original_width", "{}".format(im_res[0]))
+    add_annotation("original_height", "{}".format(im_res[1]))
+    add_annotation("original_size", "{}".format(len(data)))
+    add_annotation("resized_width", "{}".format(th_res[0]))
+    add_annotation("resized_height", "{}".format(th_res[1]))
+    add_annotation("resized_size", "{}".format(len(outdata)))
     return outdata
 
 
@@ -125,7 +132,16 @@ def fit_image_data(data, width, height):
             im_res=im_res, im_size=len(data), th_res=th_res, th_size=len(outdata)
         )
     )
+    add_annotation("original_width", "{}".format(im_res[0]))
+    add_annotation("original_height", "{}".format(im_res[1]))
+    add_annotation("original_size", "{}".format(len(data)))
+    add_annotation("resized_width", "{}".format(th_res[0]))
+    add_annotation("resized_height", "{}".format(th_res[1]))
+    add_annotation("resized_size", "{}".format(len(outdata)))
     return outdata
+
+
+# TODO: review/remove
 
 
 def _process_exif_data(im):

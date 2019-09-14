@@ -35,6 +35,7 @@ def lambda_handler(event, context):
             add_annotation("uri", uri)
             add_annotation("uri_encoded", uri_encoded)
             add_annotation(URI_PREFIX_HEADER, uri_prefix)
+            add_annotation("resource", event.resource)
             if event.resource.startswith(INFO_RESOURCE_PREFIX):
                 # TODO: pointer to function
                 pass

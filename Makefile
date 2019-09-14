@@ -5,7 +5,7 @@ clean:
 	rm -rf .aws-sam
 
 .PHONY: build
-build:
+build: style
 	sam build
 
 .PHONY: update_version

@@ -26,7 +26,7 @@ if LOCAL_ENV == False:
     patch_all()
 
     def add_annotation(key: str, value: str):
-        document = xray_recorder.current_subsegment()
+        document = xray_recorder.current_segment()
         if document:
             document.put_annotation(key, value)
 
