@@ -1,8 +1,3 @@
-__pycache__
-.cache
-.idea
-.chalice/deployed.json
-.chalice/deployments
-.chalice/deployed
-venv
-tmp
+.aws-sam
+thumbnailer/version
+tmp/

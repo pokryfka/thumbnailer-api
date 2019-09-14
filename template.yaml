@@ -1,0 +1,201 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: SAM Template for S3 Images Thumbnailer stack including CloudFront and Lambda function.
+
+Parameters:
+  CloudFrontPriceClass:
+    Type: String
+    Description: The CloudFront distribution price class.
+    Default: 'PriceClass_200'
+    AllowedValues:
+      - 'PriceClass_100'
+      - 'PriceClass_200'
+      - 'PriceClass_All'
+  ApiKeyRequired:
+    Type: String
+    Default: true
+    AllowedValues:
+      - true
+      - false
+  ContentAge:
+    Type: Number
+    Description: The value (in seconds) of Cache-Control header used to control how long objects stay in the cache.
+    Default: 604800
+    MinValue: 60
+  LongEdgeMin:
+    Type: Number
+    Description: The smallest allowed value of image width or height.
+    Default: 40
+    MinValue: 40
+    MaxValue: 400
+  LongEdgeMax:
+    Type: Number
+    Description: The biggest allowed value of image width or height.
+    Default: 2000
+    MinValue: 400
+    MaxValue: 4000
+  Environment:
+    Type: String
+    Default: DEV
+#    AllowedValues:
+#      - DEV
+#      - QA
+#      - PROD
+  SentryDsn:
+    Type: String
+    Description: Sentry DSN
+
+Globals:
+  Api:
+    BinaryMediaTypes:
+      - image~1jpg
+      - image~1png
+    Auth:
+      ApiKeyRequired: !Ref ApiKeyRequired
+  Function:
+    Runtime: python3.7
+    MemorySize: 512
+    Timeout: 10
+    Tracing: Active
+    Environment:
+      Variables:
+        ENV: !Ref Environment
+        LOG_LEVEL: INFO
+        SENTRY_DSN: !Ref SentryDsn
+
+Resources:
+  ThumbnailerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: thumbnailer/
+      Handler: app.lambda_handler
+      Environment:
+        Variables:
+          CONTENT_AGE_IN_SECONDS: !Ref ContentAge
+          LONG_EDGE_MIN: !Ref LongEdgeMin
+          LONG_EDGE_MAX: !Ref LongEdgeMax
+      Policies:
+        - AWSXrayWriteOnlyAccess
+        - Version: '2012-10-17' # Policy Document
+          Statement:
+            - Effect: Allow
+              Action:
+                - s3:Get*
+              Resource:
+                - '*'
+      Events:
+        InfoAPI:
+          Type: Api
+          Properties:
+            Path: /thumbnailer/info/{uri}
+            Method: get
+        ThumbmnailAPI:
+          Type: Api
+          Properties:
+            Path: /thumbnailer/thumbnail/{uri}/long-edge/{long_edge_pixels}
+            Method: get
+        FitAPI:
+          Type: Api
+          Properties:
+            Path: /thumbnailer/fit/{uri}/width/{width_pixels}/height/{height_pixels}
+            Method: get
+
+  ThumbnailerApiKey:
+    Type: AWS::ApiGateway::ApiKey
+    Properties:
+      Enabled: true
+
+  ThumbnailerApiUsagePlan:
+    Type: AWS::ApiGateway::UsagePlan
+    DependsOn:
+      - ServerlessRestApi
+      - ServerlessRestApiProdStage
+    Properties:
+      ApiStages:
+        - ApiId: !Ref ServerlessRestApi
+          Stage: !Ref ServerlessRestApi.Stage
+
+  ThumbnailerApiUsagePlanKey:
+    Type: AWS::ApiGateway::UsagePlanKey
+    DependsOn:
+      - ThumbnailerApiKey
+      - ThumbnailerApiUsagePlan
+    Properties:
+      KeyId: !Ref ThumbnailerApiKey
+      KeyType: API_KEY
+      UsagePlanId: !Ref ThumbnailerApiUsagePlan
+
+  CloudFrontOriginBucket:
+    Type: AWS::S3::Bucket
+
+  CloudFrontOriginBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref CloudFrontOriginBucket
+      PolicyDocument:
+        Statement:
+          -
+            Action:
+              - s3:GetObject
+            Effect: Allow
+            Resource: !Join [ "", [ "arn:aws:s3:::", !Ref CloudFrontOriginBucket, "/*" ] ]
+            Principal:
+              CanonicalUser: !GetAtt CloudFrontOriginAccessIdentity.S3CanonicalUserId
+
+  CloudFrontOriginAccessIdentity:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: 'CloudFront OAI for Thumbnailer'
+
+  CloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    DependsOn:
+      - ThumbnailerFunction
+    Properties:
+      DistributionConfig:
+        DefaultCacheBehavior:
+          Compress: true
+          ForwardedValues:
+            QueryString: false
+          TargetOriginId: !Ref CloudFrontOriginBucket
+          ViewerProtocolPolicy: redirect-to-https
+        CacheBehaviors:
+          - PathPattern: "thumbnailer/*"
+            Compress: false
+            ForwardedValues:
+              Headers:
+                - "Uri-Prefix"
+              QueryString: false
+            TargetOriginId: !Ref ThumbnailerFunction
+            ViewerProtocolPolicy: redirect-to-https
+        Enabled: true
+        HttpVersion: http2
+        Origins:
+          - DomainName:
+              !Join [ "", [ !Ref CloudFrontOriginBucket, ".s3.amazonaws.com" ] ]
+            Id: !Ref CloudFrontOriginBucket
+            S3OriginConfig:
+              OriginAccessIdentity:
+                !Join [ "", [ "origin-access-identity/cloudfront/", !Ref CloudFrontOriginAccessIdentity ] ]
+          - DomainName: !Sub  "${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com"
+            Id: !Ref ThumbnailerFunction
+            OriginPath: "/Prod"
+            OriginCustomHeaders:
+              - HeaderName: Accept
+                HeaderValue: "image/jpg"
+            CustomOriginConfig:
+              OriginProtocolPolicy: https-only
+        PriceClass: !Ref CloudFrontPriceClass
+
+Outputs:
+  ThumbnailerApiUrl:
+    Description: "API Gateway endpoint URL for Prod stage for Thumbnailer function"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/thumbnailer"
+  CdnApiUrl:
+    Description: "Thumbnailer API URL"
+    Value: !Join [ "", [ "htps://", !GetAtt CloudFrontDistribution.DomainName, "/thumbnailer"  ] ]
+  ThumbnailerApiKey:
+    #aws anigateway get-api-key --include-value --api-key e9qjdj1k48
+    Description: "API Key Id, check the value and set in X-Api-Key header"
+    Value: !Ref ThumbnailerApiKey

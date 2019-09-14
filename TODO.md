@@ -1,0 +1,9 @@
+- make CloudFront optional?
+- remove S3 bucket origin?
+- make image editor a class, tests
+- add/move Imageinfo class, tests
+- API tests
+- create README
+- create CHANGELOG
+- new repo (no binary)
+- paramterize access to the bucket(s)?
