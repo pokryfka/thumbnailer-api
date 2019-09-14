@@ -1,28 +1,46 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: SAM Template for S3 Images Thumbnailer stack.
+Description: SAM Template for S3 Images Thumbnailer stack including CloudFront and Lambda function.
 
 Parameters:
   CloudFrontPriceClass:
     Type: String
-    Description: The CloudFront distribution price class
+    Description: The CloudFront distribution price class.
     Default: 'PriceClass_200'
     AllowedValues:
       - 'PriceClass_100'
       - 'PriceClass_200'
       - 'PriceClass_All'
-#  ApiKeyRequired:
-#    Type: String
-#    Default: false
-#    AllowedValues:
-#      - true
-#      - false
+  ApiKeyRequired:
+    Type: String
+    Default: true
+    AllowedValues:
+      - true
+      - false
+  ContentAge:
+    Type: Number
+    Description: The value (in seconds) of Cache-Control header used to control how long objects stay in the cache.
+    Default: 86400
+    MinValue: 60
+  LongEdgeMin:
+    Type: Number
+    Description: The smallest allowed value of image width or height.
+    Default: 40
+    MinValue: 40
+  LongEdgeMax:
+    Type: Number
+    Description: The biggest allowed value of image width or height.
+    Default: 2000
+    MinValue: 200
+    MaxValue: 4000
 
 Globals:
   Api:
     BinaryMediaTypes:
       - image~1jpg
       - image~1png
+    Auth:
+      ApiKeyRequired: !Ref ApiKeyRequired
   Function:
     Runtime: python3.7
     MemorySize: 512
@@ -38,6 +56,11 @@ Resources:
     Properties:
       CodeUri: thumbnailer/
       Handler: app.lambda_handler
+      Environment:
+        Variables:
+          CONTENT_AGE_IN_SECONDS: !Ref ContentAge
+          LONG_EDGE_MIN: !Ref LongEdgeMin
+          LONG_EDGE_MAX: !Ref LongEdgeMax
       Policies:
         - AWSXrayWriteOnlyAccess
         - Version: '2012-10-17' # Policy Document
@@ -66,14 +89,14 @@ Resources:
 
   ThumbnailerApiKey:
     Type: AWS::ApiGateway::ApiKey
+    Properties:
+      Enabled: true
 
   ThumbnailerApiUsagePlan:
     Type: AWS::ApiGateway::UsagePlan
     DependsOn:
       - ServerlessRestApi
-      #- ServerlessRestApiProdStage # TEST
-      #- !Ref ServerlessRestApi.Stage
-      - CloudFrontDistribution # TODO: workaround for: API Stage not found: j0g3n8waa4:Prod (Service: AmazonApiGateway;
+      - ServerlessRestApiProdStage
     Properties:
       ApiStages:
         - ApiId: !Ref ServerlessRestApi
@@ -158,8 +181,8 @@ Outputs:
     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/thumbnailer"
   CdnApiUrl:
     Description: "Thumbnailer API URL"
-    Value: !Join [ "", [ !GetAtt CloudFrontDistribution.DomainName, "/thumbnailer"  ] ]
+    Value: !Join [ "", [ "htps://", !GetAtt CloudFrontDistribution.DomainName, "/thumbnailer"  ] ]
   ThumbnailerApiKey:
-    #get-api-key --include-value --api-key e9qjdj1k48
-    Description: "X-API-Key, check the value!"
+    #aws anigateway get-api-key --include-value --api-key e9qjdj1k48
+    Description: "API Key Id, check the value and set in X-Api-Key header"
     Value: !Ref ThumbnailerApiKey
