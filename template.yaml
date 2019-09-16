@@ -194,8 +194,7 @@ Outputs:
     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/thumbnailer"
   CdnApiUrl:
     Description: "Thumbnailer API URL"
-    Value: !Join [ "", [ "htps://", !GetAtt CloudFrontDistribution.DomainName, "/thumbnailer"  ] ]
+    Value: !Join [ "", [ "https://", !GetAtt CloudFrontDistribution.DomainName, "/thumbnailer"  ] ]
   ThumbnailerApiKey:
-    #aws anigateway get-api-key --include-value --api-key e9qjdj1k48
     Description: "API Key Id, check the value and set in X-Api-Key header"
     Value: !Ref ThumbnailerApiKey
