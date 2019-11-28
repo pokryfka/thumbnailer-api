@@ -1,6 +1,10 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: SAM Template for S3 Images Thumbnailer stack including CloudFront and Lambda function.
+Description: >
+  thumbnailer
+
+  SAM Template for thumbnailer of images stored on S3 bucket stack,
+  including CloudFront distribution and Lambda function resizing images.
 
 Parameters:
   CloudFrontPriceClass:
@@ -11,12 +15,6 @@ Parameters:
       - 'PriceClass_100'
       - 'PriceClass_200'
       - 'PriceClass_All'
-  ApiKeyRequired:
-    Type: String
-    Default: true
-    AllowedValues:
-      - true
-      - false
   ContentAge:
     Type: Number
     Description: The value (in seconds) of Cache-Control header used to control how long objects stay in the cache.
@@ -37,10 +35,6 @@ Parameters:
   Environment:
     Type: String
     Default: DEV
-#    AllowedValues:
-#      - DEV
-#      - QA
-#      - PROD
   SentryDsn:
     Type: String
     Description: Sentry DSN
@@ -51,7 +45,7 @@ Globals:
       - image~1jpg
       - image~1png
     Auth:
-      ApiKeyRequired: !Ref ApiKeyRequired
+      ApiKeyRequired: true
   Function:
     Runtime: python3.7
     MemorySize: 512
