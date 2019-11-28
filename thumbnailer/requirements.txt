@@ -1,5 +1,4 @@
 aws-xray-sdk
 sentry_sdk
 pydantic
-requests
 Pillow
