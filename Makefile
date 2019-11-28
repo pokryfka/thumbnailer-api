@@ -1,34 +1,22 @@
-TEMPLATE_FILE=.aws-sam/packaged.yaml
-
 .PHONY: clean
 clean:
 	rm -rf .aws-sam
 
 .PHONY: build
-build: style
+build: style update_version
 	sam build
+
+.PHONY: deploy
+deploy: build
+	sam deploy
+
+.PHONY: style
+style:
+	black thumbnailer
 
 .PHONY: update_version
 update_version:
 	git describe --tags > thumbnailer/version
-
-.PHONY: package
-package: build update_version
-	sam package \
-	    --output-template-file ${TEMPLATE_FILE} \
-	    --s3-bucket ${PACKAGE_BUCKET}
-
-.PHONY: deploy
-deploy: package
-	sam deploy \
-	    --template-file ${TEMPLATE_FILE} \
-	    --stack-name ${STACK_NAME} \
-		--capabilities CAPABILITY_IAM \
-		--parameter-overrides \
-			Environment=${ENV} \
-			SentryDsn=${SENTRY_DSN}
-	aws cloudformation describe-stacks \
-    	--stack-name ${STACK_NAME} --query 'Stacks[].Outputs'
 
 .PHONY: logs
 logs:
@@ -53,6 +41,3 @@ test-fit:
 local: build
 	sam local start-api --env-vars env-local.json
 
-.PHONY: style
-style:
-	black thumbnailer
