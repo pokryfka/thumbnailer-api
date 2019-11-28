@@ -2,7 +2,7 @@ from os import getenv
 
 try:
     with open("./version") as f:
-        VER = f.read()
+        VER = f.read().rstrip()
 except FileNotFoundError:
     version = "?"
 RELEASE = "thumbnailer-{}".format(VER)
@@ -51,13 +51,15 @@ if SENTRY_DSN and SENTRY_DSN.startswith("https://"):
 # Logging
 
 import logging
-import traceback
 
 
 logging.basicConfig()
 logging.getLogger().setLevel(LOG_LEVEL)
 
 
-def handle_error(exception, message=""):
-    logging.error("{}: {}\n{}".format(message, exception, traceback.format_exc()))
+def handle_error(exception, message=None):
+    if message:
+        logging.warning(f"{message}: {exception}", exc_info=True)
+    else:
+        logging.warning(f"Error: {exception}", exc_info=True)
     capture_exception(exception)
