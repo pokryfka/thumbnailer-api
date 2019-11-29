@@ -1,3 +1,4 @@
 .aws-sam
+samconfig.toml
 thumbnailer/version
 tmp/
