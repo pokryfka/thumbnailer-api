@@ -13,28 +13,28 @@ class Response(BaseModel):
 
 
 class ResultResponse(Response):
-    statusCode = HTTPStatus.OK.value
+    statusCode: int = HTTPStatus.OK.value
 
 
 class ServerErrorResponse(Response):
-    statusCode = HTTPStatus.INTERNAL_SERVER_ERROR
+    statusCode: int = HTTPStatus.INTERNAL_SERVER_ERROR
 
 
 class BadRequestResponse(Response):
-    statusCode = HTTPStatus.BAD_REQUEST.value
+    statusCode: int = HTTPStatus.BAD_REQUEST.value
 
 
 class NotFoundResponse(Response):
-    statusCode = HTTPStatus.NOT_FOUND.value
+    statusCode: int = HTTPStatus.NOT_FOUND.value
 
 
 class ForbiddenResponse(Response):
-    statusCode = HTTPStatus.FORBIDDEN.value
+    statusCode: int = HTTPStatus.FORBIDDEN.value
 
 
 class JSONResultResponse(ResultResponse):
-    headers = {"Content-Type": "application/json"}
-    body: str = ""
+    headers: Dict[str, str] = {"Content-Type": "application/json"}
+    body: Optional[str] = ""
 
     @validator("body", pre=True, whole=True)
     def encode_body(cls, v):
