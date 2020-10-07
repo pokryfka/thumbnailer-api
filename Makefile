@@ -4,7 +4,7 @@ clean:
 
 .PHONY: build
 build: style update_version
-	sam build
+	sam build --use-container
 
 .PHONY: deploy
 deploy: build
